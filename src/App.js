@@ -1,51 +1,67 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from "react-router-dom";
+import AdminLogin from "./AdminLogin";
+import AdminRegister from "./AdminRegister";
+import UsersManagement from "./UsersManagement"; // Новый компонент для управления пользователями
+import "./App.css";
 
-//Utils
-import { createMuiTheme, ThemeProvider, CssBaseline, useMediaQuery } from "@material-ui/core";
+function Dashboard({ onLogout }) {
+  const navigate = useNavigate();
 
-//Styles
-import "./assets/scss/app.scss";
+  return (
+    <div>
+      <h1>Администрирование</h1>
+      <h2>Вы авторизованы как администратор</h2>
+      <button onClick={onLogout}>Выйти</button>
+      <button onClick={() => navigate("/create-admin")} style={{ marginTop: "20px" }}>
+        Создать нового администратора
+      </button>
+      <button onClick={() => navigate("/users")} style={{ marginTop: "20px" }}>
+        Пользователи
+      </button>
+    </div>
+  );
+}
 
-//Pages
-import Home from "./pages/Home";
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("authToken")
+  );
 
-//Components
-import Header from "./components/Header";
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
 
-const App = () => {
-	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-	const [page, setPage] = useState(0);
-	const theme = useMemo(
-		() =>
-			createMuiTheme({
-				palette: {
-					type: prefersDarkMode ? "dark" : "light"
-				}
-			}),
-		[prefersDarkMode]
-	);
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    setIsAuthenticated(false);
+  };
 
-	const handleChangePage = (event, newPage) => {
-		setPage(newPage);
-	};
-	const switchPage = () => {
-		switch (page) {
-			case 0:
-				return <Home changePage={handleChangePage} />;
-			default:
-				return <h1>404 Page</h1>;
-		}
-	};
-
-	return (
-		<ThemeProvider theme={theme}>
-			<CssBaseline />
-
-			<Header />
-
-			{switchPage()}
-		</ThemeProvider>
-	);
-};
+  return (
+    <Router>
+      <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+        <Routes>
+          <Route path="/login" element={<AdminLogin onLoginSuccess={handleLoginSuccess} />} />
+          <Route path="/create-admin" element={<AdminRegister />} />
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? (
+                <Dashboard onLogout={handleLogout} />
+              ) : (
+                <div>
+                  <h1>Администрирование</h1>
+                  <p>Пожалуйста, войдите или зарегистрируйтесь</p>
+                  <Link to="/login">Войти</Link> или <Link to="/register">Зарегистрироваться</Link>
+                </div>
+              )
+            }
+          />
+          <Route path="/users" element={<UsersManagement />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
 
 export default App;
